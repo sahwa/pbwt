@@ -161,47 +161,51 @@ void paintAncestryMatrix (PBWT *p, char* fileRoot,int chunksperregion,int ploidy
   }
   
   /* report results */
-  FILE *fc = fopenTag (fileRoot, "chunkcounts.out", "w") ;
-  FILE *fl = fopenTag (fileRoot, "chunklengths.out", "w") ;
-  FILE *fc2 = fopenTag (fileRoot, "regionsquaredchunkcounts.out", "w") ;
-  FILE *fc3 = fopenTag (fileRoot, "regionchunkcounts.out", "w") ;
-  fprintf (fc,"RECIPIENT") ; 
-  fprintf (fl,"RECIPIENT") ; 
-  fprintf (fc2,"RECIPIENT nregions") ; 
-  fprintf (fc3,"RECIPIENT nregions") ; 
+  gzFile fc = gzopenTag (fileRoot, "chunkcounts.out.gz", "w") ;
+  gzFile fl  = gzopenTag (fileRoot, "chunklengths.out.gz", "w") ;
+  gzFile fc2 = gzopenTag (fileRoot, "regionsquaredchunkcounts.out.gz", "w") ;
+  gzFile fc3 = gzopenTag (fileRoot, "regionchunkcounts.out.gz", "w") ;
+
+  gzprintf (fc,"RECIPIENT") ; 
+  gzprintf (fl,"RECIPIENT") ; 
+  gzprintf (fc2,"RECIPIENT nregions") ; 
+  gzprintf (fc3,"RECIPIENT nregions") ; 
   for (i = 0 ; i < Ninds ; ++i)    {
-    fprintf (fc," IND%i",i+1) ; 
-    fprintf (fl," IND%i",i+1) ; 
-    fprintf (fc2," IND%i",i+1) ; 
-    fprintf (fc3," IND%i",i+1) ; 
+    gzprintf (fc," IND%i",i+1) ; 
+    gzprintf (fl," IND%i",i+1) ; 
+    gzprintf (fc2," IND%i",i+1) ; 
+    gzprintf (fc3," IND%i",i+1) ; 
   }
-  fputc ('\n', fc) ;
-  fputc ('\n', fl) ;
-  fputc ('\n', fc2) ;
-  fputc ('\n', fc3) ;
+  gzputc (fc, '\n') ;
+  gzputc (fl, '\n') ;
+  gzputc (fc2, '\n') ;
+  gzputc (fc3, '\n') ;
  
  for (i = 0 ; i < Ninds ; ++i)    {
-   fprintf (fc3,"IND%i %.2f",i+1, nregions[i]) ; 
-   fprintf (fc2,"IND%i %.2f",i+1, nregions[i]) ; 
-   fprintf (fl,"IND%i",i+1) ; 
-   fprintf (fc,"IND%i",i+1) ; 
+   gzprintf (fc3,"IND%i %.2f",i+1, nregions[i]) ; 
+   gzprintf (fc2,"IND%i %.2f",i+1, nregions[i]) ; 
+   gzprintf (fl,"IND%i",i+1) ; 
+   gzprintf (fc,"IND%i",i+1) ; 
  for (j = 0 ; j < Ninds ; ++j) 
 	{ 
-	  fprintf (fc, " %.4f", counts[i][j]) ; 
-	  fprintf (fl, " %.4f", totlengths[i][j]) ; 
- 	  fprintf (fc2," %.4f", counts2[i][j]) ; 
-	  fprintf (fc3," %.4f", counts3[i][j]) ; 
+	  gzprintf (fc, " %.4f", counts[i][j]) ; 
+	  gzprintf (fl, " %.4f", totlengths[i][j]) ; 
+ 	  gzprintf (fc2," %.4f", counts2[i][j]) ; 
+	  gzprintf (fc3," %.4f", counts3[i][j]) ; 
 	  totCounts[i] += counts[i][j] ; 
 	}
-      fputc ('\n', fc) ;
-      fputc ('\n', fl) ;
-      fputc ('\n', fc2) ;
-      fputc ('\n', fc3) ;
+      gzputc (fc, '\n') ;
+      gzputc (fl, '\n') ;
+      gzputc (fc2, '\n') ;
+      gzputc (fc3, '\n') ;
       if (isCheck && (i%2) && p->samples) 
 	fprintf (logFile, "%s %8.4g %8.4g\n", 
 		 sampleName (sample(p,i-1)), totCounts[i-1], totCounts[i]) ;
     }
-  fclose (fc) ; fclose (fl) ; fclose (fc2) ;fclose (fc3) ;
+  gzclose (fc); 
+  gzclose (fl); 
+  gzclose (fc2);
+  gzclose (fc3) ;
   timeUpdate(logFile);
   /* clean up */
   for (i = 0 ; i < Ninds ; ++i) { free (counts[i]) ; free (counts2[i]) ; free (counts3[i]) ; free (totlengths[i]) ; }
