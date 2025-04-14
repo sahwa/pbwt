@@ -41,16 +41,20 @@ static inline int isprevind(int i,int *map_indhap){
 
 static inline void printAll(int ii,int Ninds,
 			    double *t_counts,double *t_counts2,double *t_counts3,double *t_totlengths,double nregions,
-			    gzFile fc,gzFile fc2,gzFile fc3,gzFile fl,gzFile fr){
-  int jj ; for (jj = 0 ; jj < Ninds ; ++jj) {
+			    gzFile fc,gzFile fc2,gzFile fc3,gzFile fl,gzFile fr, PBWT *p, int ploidy){
+  int jj;
+  const char* recipName = sampleName(sample(p, ii * ploidy));
+  for (jj = 0 ; jj < Ninds ; ++jj) {
     if(t_counts[jj]){
-      gzprintf (fc, "%i %i %.4f\n", ii+1,jj+1,t_counts[jj]) ; 
-      gzprintf (fl, "%i %i %.4f\n", ii+1,jj+1,t_totlengths[jj]) ; 
-      gzprintf (fc2,"%i %i %.4f\n", ii+1,jj+1,t_counts2[jj]) ; 
-      gzprintf (fc3,"%i %i %.4f\n", ii+1,jj+1,t_counts3[jj]) ; 
+      const char* donorName = sampleName(sample(p, ii * ploidy));
+
+      gzprintf(fc, "%s %s %.4f\n", recipName, donorName, t_counts[jj]); 
+      gzprintf(fl, "%s %s %.4f\n", recipName, donorName, t_totlengths[jj]); 
+      gzprintf(fc2,"%s %s %.4f\n", recipName, donorName, t_counts2[jj]); 
+      gzprintf(fc3,"%s %s %.4f\n", recipName, donorName, t_counts3[jj]); 
     }
   }
-  gzprintf (fr,"%i %.2f\n",ii+1, nregions) ; 
+  gzprintf(fr, "%s %.2f\n", recipName, nregions); 
 }
 
 void paintAncestryMatrix (PBWT *p, char* fileRoot,int chunksperregion,int ploidy,int outputlocal)
@@ -161,47 +165,51 @@ void paintAncestryMatrix (PBWT *p, char* fileRoot,int chunksperregion,int ploidy
   }
   
   /* report results */
-  FILE *fc = fopenTag (fileRoot, "chunkcounts.out", "w") ;
-  FILE *fl = fopenTag (fileRoot, "chunklengths.out", "w") ;
-  FILE *fc2 = fopenTag (fileRoot, "regionsquaredchunkcounts.out", "w") ;
-  FILE *fc3 = fopenTag (fileRoot, "regionchunkcounts.out", "w") ;
-  fprintf (fc,"RECIPIENT") ; 
-  fprintf (fl,"RECIPIENT") ; 
-  fprintf (fc2,"RECIPIENT nregions") ; 
-  fprintf (fc3,"RECIPIENT nregions") ; 
+  gzFile fc = gzopenTag (fileRoot, "chunkcounts.out.gz", "w") ;
+  gzFile fl  = gzopenTag (fileRoot, "chunklengths.out.gz", "w") ;
+  gzFile fc2 = gzopenTag (fileRoot, "regionsquaredchunkcounts.out.gz", "w") ;
+  gzFile fc3 = gzopenTag (fileRoot, "regionchunkcounts.out.gz", "w") ;
+
+  gzprintf (fc,"RECIPIENT") ; 
+  gzprintf (fl,"RECIPIENT") ; 
+  gzprintf (fc2,"RECIPIENT nregions") ; 
+  gzprintf (fc3,"RECIPIENT nregions") ; 
   for (i = 0 ; i < Ninds ; ++i)    {
-    fprintf (fc," IND%i",i+1) ; 
-    fprintf (fl," IND%i",i+1) ; 
-    fprintf (fc2," IND%i",i+1) ; 
-    fprintf (fc3," IND%i",i+1) ; 
+    gzprintf(fc, " %s", sampleName(sample(p, i * ploidy))); 
+    gzprintf (fl," %s", sampleName(sample(p, i * ploidy))); 
+    gzprintf (fc2," %s", sampleName(sample(p, i * ploidy)));
+    gzprintf (fc3," %s", sampleName(sample(p, i * ploidy))); 
   }
-  fputc ('\n', fc) ;
-  fputc ('\n', fl) ;
-  fputc ('\n', fc2) ;
-  fputc ('\n', fc3) ;
+  gzputc (fc, '\n') ;
+  gzputc (fl, '\n') ;
+  gzputc (fc2, '\n') ;
+  gzputc (fc3, '\n') ;
  
  for (i = 0 ; i < Ninds ; ++i)    {
-   fprintf (fc3,"IND%i %.2f",i+1, nregions[i]) ; 
-   fprintf (fc2,"IND%i %.2f",i+1, nregions[i]) ; 
-   fprintf (fl,"IND%i",i+1) ; 
-   fprintf (fc,"IND%i",i+1) ; 
+	gzprintf (fc3, "%s %.2f", sampleName(sample(p, i * ploidy)), nregions[i]);
+	gzprintf (fc2, "%s %.2f", sampleName(sample(p, i * ploidy)), nregions[i]);
+	gzprintf (fl,  "%s",       sampleName(sample(p, i * ploidy)));
+	gzprintf (fc,  "%s",       sampleName(sample(p, i * ploidy)));
  for (j = 0 ; j < Ninds ; ++j) 
 	{ 
-	  fprintf (fc, " %.4f", counts[i][j]) ; 
-	  fprintf (fl, " %.4f", totlengths[i][j]) ; 
- 	  fprintf (fc2," %.4f", counts2[i][j]) ; 
-	  fprintf (fc3," %.4f", counts3[i][j]) ; 
+	  gzprintf (fc, " %.4f", counts[i][j]) ; 
+	  gzprintf (fl, " %.4f", totlengths[i][j]) ; 
+ 	  gzprintf (fc2," %.4f", counts2[i][j]) ; 
+	  gzprintf (fc3," %.4f", counts3[i][j]) ; 
 	  totCounts[i] += counts[i][j] ; 
 	}
-      fputc ('\n', fc) ;
-      fputc ('\n', fl) ;
-      fputc ('\n', fc2) ;
-      fputc ('\n', fc3) ;
+      gzputc (fc, '\n') ;
+      gzputc (fl, '\n') ;
+      gzputc (fc2, '\n') ;
+      gzputc (fc3, '\n') ;
       if (isCheck && (i%2) && p->samples) 
 	fprintf (logFile, "%s %8.4g %8.4g\n", 
 		 sampleName (sample(p,i-1)), totCounts[i-1], totCounts[i]) ;
     }
-  fclose (fc) ; fclose (fl) ; fclose (fc2) ;fclose (fc3) ;
+  gzclose (fc); 
+  gzclose (fl); 
+  gzclose (fc2);
+  gzclose (fc3) ;
   timeUpdate(logFile);
   /* clean up */
   for (i = 0 ; i < Ninds ; ++i) { free (counts[i]) ; free (counts2[i]) ; free (counts3[i]) ; free (totlengths[i]) ; }
@@ -251,7 +259,7 @@ void paintAncestryMatrixSparse (PBWT *p, char* fileRoot,int chunksperregion,int 
       
       // Clear records if we have a new individual
       if(!isprevind(i,map_indhap)){
-		if(i>0) printAll(map_indhap[i-1],Ninds,t_counts,t_counts2,t_counts3,t_totlengths,nregions[map_indhap[i-1]],fc,fc2,fc3,fl,fr);
+		if(i>0) printAll(map_indhap[i-1],Ninds,t_counts,t_counts2,t_counts3,t_totlengths,nregions[map_indhap[i-1]],fc,fc2,fc3,fl,fr,p,ploidy);
 	memset (t_obs, 0, sizeof(int)*Ninds) ;
 	memset (partCounts, 0, sizeof(double)*Ninds) ;
 	memset (t_counts, 0, sizeof(double)*Ninds) ;
@@ -308,7 +316,7 @@ void paintAncestryMatrixSparse (PBWT *p, char* fileRoot,int chunksperregion,int 
 
     printAll(map_indhap[p->M-1],Ninds,
 	   t_counts,t_counts2,t_counts3,t_totlengths,nregions[map_indhap[p->M-1]],
-	   fc,fc2,fc3,fl,fr);  
+	   fc,fc2,fc3,fl,fr,p,ploidy);  
 
   /* clean up */
   free (t_obs) ;
