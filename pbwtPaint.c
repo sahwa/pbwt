@@ -171,10 +171,10 @@ void paintAncestryMatrix (PBWT *p, char* fileRoot,int chunksperregion,int ploidy
   gzprintf (fc2,"RECIPIENT nregions") ; 
   gzprintf (fc3,"RECIPIENT nregions") ; 
   for (i = 0 ; i < Ninds ; ++i)    {
-    gzprintf (fc," IND%i",i+1) ; 
-    gzprintf (fl," IND%i",i+1) ; 
-    gzprintf (fc2," IND%i",i+1) ; 
-    gzprintf (fc3," IND%i",i+1) ; 
+    gzprintf(fc, " %s", sampleName(sample(p, i * ploidy))); 
+    gzprintf (fl," %s", sampleName(sample(p, i * ploidy))); 
+    gzprintf (fc2," %s", sampleName(sample(p, i * ploidy)));
+    gzprintf (fc3," %s", sampleName(sample(p, i * ploidy))); 
   }
   gzputc (fc, '\n') ;
   gzputc (fl, '\n') ;
@@ -182,10 +182,10 @@ void paintAncestryMatrix (PBWT *p, char* fileRoot,int chunksperregion,int ploidy
   gzputc (fc3, '\n') ;
  
  for (i = 0 ; i < Ninds ; ++i)    {
-   gzprintf (fc3,"IND%i %.2f",i+1, nregions[i]) ; 
-   gzprintf (fc2,"IND%i %.2f",i+1, nregions[i]) ; 
-   gzprintf (fl,"IND%i",i+1) ; 
-   gzprintf (fc,"IND%i",i+1) ; 
+	gzprintf (fc3, "%s %.2f", sampleName(sample(p, i * ploidy)), nregions[i]);
+	gzprintf (fc2, "%s %.2f", sampleName(sample(p, i * ploidy)), nregions[i]);
+	gzprintf (fl,  "%s",       sampleName(sample(p, i * ploidy)));
+	gzprintf (fc,  "%s",       sampleName(sample(p, i * ploidy)));
  for (j = 0 ; j < Ninds ; ++j) 
 	{ 
 	  gzprintf (fc, " %.4f", counts[i][j]) ; 
